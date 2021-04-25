@@ -15,6 +15,8 @@ class AddIntent(Resource):
     def post(self):
         intent = request.json['intent_name']
         # date_created = datetime.timestamp(datetime.utcnow())
+        if self.checkExist(intent): return {'response':'intent already exist!!'}
+        
         date_created =datetime.utcnow()
         data = {
             'intent':intent,
@@ -24,4 +26,9 @@ class AddIntent(Resource):
 
         self.collection.insert_one(data)
         
-        return {'response':'Intent Created'}
+        return {'response':'intent created'}
+    
+    def checkExist(self,intent_name):
+        intent_data = list(self.collection.find({'intent':intent_name}))
+        
+        return True if len(intent_data) == 1 else False

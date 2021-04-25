@@ -26,7 +26,7 @@ api.add_resource(AddIntent, "/add_intent/" ,resource_class_kwargs={'collection':
 @app.route('/')
 def index():
     return "YOYO"
-    return json.dumps(collection.find_one(), sort_keys=True, indent=4, default=json_util.default)
+    # return json.dumps(collection.find_one(), sort_keys=True, indent=4, default=json_util.default)
 
 if __name__ == "__main__":
     app.run(debug=True)
