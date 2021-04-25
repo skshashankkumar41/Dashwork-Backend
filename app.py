@@ -2,12 +2,18 @@ import json
 import pymongo
 from bson import json_util
 from flask import Flask,jsonify
+from flask_cors import CORS, cross_origin
 from flask_restful import Api, Resource
 from resources.add_intent import AddIntent
 
 app = Flask(__name__)
 api = Api(app)
 
+cors = CORS(app, resources={
+    r"/*": {
+       "origins": "*"
+    }
+})
 
 
 client = pymongo.MongoClient('mongodb://127.0.0.1:27017/')

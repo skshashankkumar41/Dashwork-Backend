@@ -23,4 +23,5 @@ class AddIntent(Resource):
         }
 
         self.collection.insert_one(data)
-        return 'Intent Created'
+        
+        return {'response':'Intent Created'}
