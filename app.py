@@ -5,7 +5,7 @@ from flask_cors import CORS, cross_origin
 from flask_restful import Api, Resource
 from resources.add_intent import AddIntent
 from resources.get_intents import GetIntent
-from mongo_connector import connector
+from mongo_connector import db_connector
 
 app = Flask(__name__)
 api = Api(app)
@@ -16,7 +16,7 @@ cors = CORS(app, resources={
     }
 })
 
-intent_collection = connector()
+intent_collection = db_connector()
 
 api.add_resource(AddIntent, "/add_intent/" ,resource_class_kwargs={'collection': intent_collection})
 api.add_resource(GetIntent, "/get_intents/" ,resource_class_kwargs={'collection': intent_collection})
