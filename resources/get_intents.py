@@ -8,7 +8,7 @@ class GetIntent(Resource):
     def __init__(self,collection):
         self.collection = collection
 
-    def post(self):
+    def get(self):
         
         intents = self.collection.distinct('intent')
         return {'intents':intents}

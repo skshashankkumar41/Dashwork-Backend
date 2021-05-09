@@ -28,4 +28,5 @@ api.add_resource(GetIntent, "/get_intents/" ,resource_class_kwargs={'collection'
 #     # return json.dumps(collection.find_one(), sort_keys=True, indent=4, default=json_util.default)
 
 if __name__ == "__main__":
+    # app.run(host='192.168.0.105',debug=True)
     app.run(debug=True)

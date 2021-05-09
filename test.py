@@ -6,3 +6,4 @@ mydb = client['dw']
 collection = mydb.collection
 
 print(type(jsonify(collection.find_one())))
+
