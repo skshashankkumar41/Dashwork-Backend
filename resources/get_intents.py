@@ -1,8 +1,4 @@
-import json
-import pymongo 
-from datetime import datetime
-from flask import Flask,request, jsonify
-from flask_restful import Api, Resource, reqparse
+from flask_restful import  Resource
 
 class GetIntent(Resource):
     def __init__(self,collection):

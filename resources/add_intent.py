@@ -1,9 +1,6 @@
-import json
-import pymongo 
+from flask import request
+from flask_restful import Resource
 from datetime import datetime
-from flask import Flask,request, jsonify
-from flask_restful import Api, Resource, reqparse
-
 
 class AddIntent(Resource):
     def __init__(self,collection):
