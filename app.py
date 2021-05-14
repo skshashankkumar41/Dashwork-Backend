@@ -8,6 +8,8 @@ from resources.get_intents import GetIntent
 from resources.delete_intent import DeleteIntent
 from resources.add_utterance import AddUtterance
 from resources.get_utterances import GetUtterances
+from resources.delete_utterance import DeleteUtterance
+from resources.update_utterance import UpdateUtterance
 from mongo_connector import db_connector
 
 app = Flask(__name__)
@@ -26,6 +28,8 @@ api.add_resource(GetIntent, "/get_intents/" ,resource_class_kwargs={'collection'
 api.add_resource(DeleteIntent, "/delete_intent/" ,resource_class_kwargs={'collection': intent_collection})
 api.add_resource(AddUtterance, "/add_utterance/" ,resource_class_kwargs={'collection': intent_collection})
 api.add_resource(GetUtterances, "/get_utterances/" ,resource_class_kwargs={'collection': intent_collection})
+api.add_resource(DeleteUtterance, "/delete_utterance/" ,resource_class_kwargs={'collection': intent_collection})
+api.add_resource(UpdateUtterance, "/update_utterance/" ,resource_class_kwargs={'collection': intent_collection})
 
 
 # @app.route('/')
