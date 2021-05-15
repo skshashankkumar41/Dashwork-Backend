@@ -14,4 +14,4 @@ class DeleteUtterance(Resource):
                             { "intent": intent},
                             { "$pull": { "utterances": utterance }})
         
-        return {'response':'utterance deleted'}
+        return {'response':'utterance deleted','status':'success'}

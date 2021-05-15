@@ -16,7 +16,7 @@ class UpdateUtterance(Resource):
                 { "intent": intent,"utterances":utterance},
                 { "$set": { "utterances.$" : updated_utterance } })
         
-            return {'response':'utterance updated'}
+            return {'response':'utterance updated','status':'success'}
 
         else:
-            return {'response':"utterance updation failed:already exist!!"}
+            return {'response':"utterance updation failed: already exist!!","status":"error"}
