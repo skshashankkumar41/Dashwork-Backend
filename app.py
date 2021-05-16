@@ -1,6 +1,6 @@
-import json
-from bson import json_util
+import config
 from flask import Flask,jsonify
+from trainer.trainer import Trainer
 from flask_cors import CORS, cross_origin
 from flask_restful import Api, Resource
 from resources.add_intent import AddIntent
@@ -10,6 +10,7 @@ from resources.add_utterance import AddUtterance
 from resources.get_utterances import GetUtterances
 from resources.delete_utterance import DeleteUtterance
 from resources.update_utterance import UpdateUtterance
+from resources.train_model import TrainModel
 from mongo_connector import db_connector
 
 app = Flask(__name__)
@@ -22,6 +23,8 @@ cors = CORS(app, resources={
 })
 
 intent_collection = db_connector()
+# trainer = Trainer(intent_collection,config.DATA_PATH)
+# resp = trainer.data_creator()
 
 api.add_resource(AddIntent, "/add_intent/" ,resource_class_kwargs={'collection': intent_collection})
 api.add_resource(GetIntent, "/get_intents/" ,resource_class_kwargs={'collection': intent_collection})
@@ -30,6 +33,7 @@ api.add_resource(AddUtterance, "/add_utterance/" ,resource_class_kwargs={'collec
 api.add_resource(GetUtterances, "/get_utterances/" ,resource_class_kwargs={'collection': intent_collection})
 api.add_resource(DeleteUtterance, "/delete_utterance/" ,resource_class_kwargs={'collection': intent_collection})
 api.add_resource(UpdateUtterance, "/update_utterance/" ,resource_class_kwargs={'collection': intent_collection})
+api.add_resource(TrainModel, "/train_model/" ,resource_class_kwargs={'collection': intent_collection,'config':config})
 
 
 # @app.route('/')
