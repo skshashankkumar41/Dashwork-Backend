@@ -8,9 +8,10 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 
 class Trainer:
-    def __init__(self,intent_collection,data_path):
+    def __init__(self,intent_collection,config):
         self.intent_collection = intent_collection
-        self.data_path = data_path
+        self.config = config
+        self.data_path = config.DATA_PATH
 
     def data_creator(self):
         file_name = '/training_{}.xlsx'.format(datetime.now().strftime("%Y%m%d%H%M%S"))
