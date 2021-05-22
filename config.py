@@ -11,6 +11,9 @@ MODEL_CONFIG = {
         'epochs':5,
         'pre_trained_model':"bert-base-uncased",
         'tokenizer': BertTokenizer.from_pretrained("bert-base-uncased"),
-        "model_config":BertConfig()
+        "model_config":BertConfig(),
+        'train_batch_size':4,
+        'val_batch_size':4,
+        
     }
 }
