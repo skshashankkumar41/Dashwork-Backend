@@ -1,5 +1,8 @@
 import numpy as np
 import pandas as pd
+import torch
+import pickle
+from sklearn import metrics
 import pymongo
 
 def db_connector():
@@ -29,3 +32,19 @@ def explode(df, lst_cols, fill_value='', preserve_index=False):
     if not preserve_index:        
         res = res.reset_index(drop=True)
     return res
+
+def print_metrics(true, pred, loss, type):
+    accuracy = metrics.accuracy_score(true,pred)
+    f1_score_micro = metrics.f1_score(true, pred, average='micro',zero_division = 1)
+    print("-------{} Evaluation--------".format(type))
+    print("CE Loss: {:.4f}".format(loss))
+    print("Accuracy: {:.4f}".format(accuracy))
+    print("F1-measure Micro: {:.4f}".format(f1_score_micro))
+    print("------------------------------------")
+    # return accuracy,loss
+    return accuracy, loss 
+
+def model_saver():
+    torch.save(state, filename)
+    with open('/content/drive/My Drive/email_bot/encoder.pkl', 'wb') as f:
+        pickle.dump(label_cols, f)

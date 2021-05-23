@@ -2,7 +2,7 @@ import os
 import torch
 import pandas as pd
 import numpy as np
-from .utils import explode
+from .utils import explode,print_metrics,model_saver
 from .bert_dataset import BertDataset
 from .bert_model import BertModel
 from torch.utils.data import DataLoader
@@ -16,9 +16,10 @@ class Trainer:
         self.intent_collection = intent_collection
         self.config = config
         self.data_path = config.DATA_PATH
+        self.name = datetime.now().strftime("%Y%m%d%H%M%S")
 
     def data_creator(self):
-        file_name = '/training_{}.xlsx'.format(datetime.now().strftime("%Y%m%d%H%M%S"))
+        file_name = '/training_{}.xlsx'.format(self.name)
         intents = []
         utterances = []
         for data in self.intent_collection.find({}):
@@ -84,10 +85,32 @@ class Trainer:
     def bert_trainer(self):
         epochs = self.config['epochs']
         device = self.config['device']
+        
+        def validate(model, valLoader):
+            model.eval()
+            val_targets = []
+            val_outputs = []
+            with torch.no_grad():
+                for _, data in enumerate(valLoader):
+                    ids = data['ids'].to(device, dtype=torch.long)
+                    mask = data['mask'].to(device, dtype=torch.long)
+                    token_type_ids = data['token_type_ids'].to(device, dtype=torch.long)
+                    targets = data['targets'].to(device, dtype=torch.long)
+                    outputs = model(ids, mask, token_type_ids)
+                    _, preds = torch.max(outputs, dim=1)
+                    loss = loss_fun(outputs, targets)
+                    epoch_loss = loss.item()
+                    val_targets.extend(targets.cpu().detach().numpy().tolist())
+                    val_outputs.extend(preds.cpu().detach().numpy().tolist())
+
+            return print_metrics(val_targets,val_outputs, epoch_loss,'Validation')
+        
         trainLoader, valLoader, num_labels, le = self.bert_loader
         model = BertModel(num_labels,self.config['model_config']).to(device) 
         optimizer = torch.optim.AdamW(model.parameters(), lr=self.config['lr'])
+        loss_fun = torch.nn.CrossEntropyLoss().to(device)
         prev_loss = float('inf')
+        
         for epoch in range(1,epochs+1):
             print(f'Epoch: {epoch}')
             #eval_metrics["epochs"].append(epoch)

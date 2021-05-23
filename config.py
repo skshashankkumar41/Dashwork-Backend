@@ -3,6 +3,7 @@ from transformers import BertTokenizer, BertConfig
 
 BASE_PATH = 'G:/AIP/Dashwork-Backend'
 DATA_PATH = BASE_PATH + '/trainer/data'
+MODEL_PATH = BASE_PATH + '/trainer/models'
 
 MODEL_CONFIG = {
     'bert':{
@@ -14,6 +15,6 @@ MODEL_CONFIG = {
         "model_config":BertConfig(),
         'train_batch_size':4,
         'val_batch_size':4,
-        
+
     }
 }
