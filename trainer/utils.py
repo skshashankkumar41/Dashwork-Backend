@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 import torch
+import os
+import config
 import pickle
 from sklearn import metrics
 import pymongo
@@ -44,7 +46,12 @@ def print_metrics(true, pred, loss, type):
     # return accuracy,loss
     return accuracy, loss 
 
-def model_saver():
-    torch.save(state, filename)
-    with open('/content/drive/My Drive/email_bot/encoder.pkl', 'wb') as f:
-        pickle.dump(label_cols, f)
+def model_saver(le,state,filename):
+    os.mkdir('model_{}'.format(filename))
+    save_path = ''
+    torch.save(state, config.BASE_PATH+'/'+'model_{}/model.pth'.format(filename))
+    
+    with open(config.BASE_PATH+'/'+'model_{}/encoder.pkl'.format(filename), 'wb') as f:
+        pickle.dump(le, f)
+
+    return None

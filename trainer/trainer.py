@@ -152,7 +152,7 @@ class Trainer:
                 print("Val loss decrease from {} to {}:".format(prev_loss,val_loss))
                 prev_loss = val_loss
                 checkpoint = {"state_dict": model.state_dict()}
-                # save_checkpoint(checkpoint,filename = '/content/drive/My Drive/Ori/sentiment/sent_model_25k_v1.pth')
+                model_saver(checkpoint,filename = self.name)
 
     
 
