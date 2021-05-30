@@ -155,7 +155,7 @@ class Trainer:
                 print("Val loss decrease from {} to {}:".format(prev_loss,val_loss))
                 prev_loss = val_loss
                 checkpoint = {"state_dict": model.state_dict()}
-                model_saver(checkpoint,filename = self.name)
+                model_saver(le,checkpoint,filename = self.name)
 
         return None
 

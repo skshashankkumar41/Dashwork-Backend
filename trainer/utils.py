@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import torch
 import os
+from os import path
 import config
 import pickle
 from sklearn import metrics
@@ -47,11 +48,12 @@ def print_metrics(true, pred, loss, type):
     return accuracy, loss 
 
 def model_saver(le,state,filename):
-    os.mkdir('model_{}'.format(filename))
+    if not path.isdir(config.MODEL_PATH+'/'+'model_{}'.format(filename)):
+        os.mkdir(config.MODEL_PATH+'/'+'model_{}'.format(filename))
     save_path = ''
-    torch.save(state, config.BASE_PATH+'/'+'model_{}/model.pth'.format(filename))
+    torch.save(state, config.MODEL_PATH+'/'+'model_{}/model.pth'.format(filename))
     
-    with open(config.BASE_PATH+'/'+'model_{}/encoder.pkl'.format(filename), 'wb') as f:
+    with open(config.MODEL_PATH+'/'+'model_{}/encoder.pkl'.format(filename), 'wb') as f:
         pickle.dump(le, f)
 
     return None
