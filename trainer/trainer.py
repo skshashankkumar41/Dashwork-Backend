@@ -4,12 +4,13 @@ import pandas as pd
 import numpy as np
 from .utils import explode,print_metrics,model_saver
 from .bert_dataset import BertDataset
-from .bert_model import BertModel
+from .bert_model import BertIntentModel
 from torch.utils.data import DataLoader
 from datetime import datetime
 from transformers import BertTokenizer
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
+from transformers import BertTokenizer, BertConfig
 
 class Trainer:
     def __init__(self,intent_collection,config):
@@ -33,6 +34,7 @@ class Trainer:
         return None 
 
     def get_latest_file(self):
+        self.data_creator()
         files = os.listdir(self.data_path)
         latest_file_name = '/training_{}.xlsx'.format(max([file.split('_')[1].split('.')[0] for file in files]))
         return latest_file_name
@@ -40,6 +42,7 @@ class Trainer:
     def data_loader(self):
         training_file = self.data_path + self.get_latest_file()
         df = pd.read_excel(training_file)
+        df.dropna(inplace=True)
         df = df.sample(frac=1).reset_index(drop=True)
 
         le = LabelEncoder()
@@ -55,18 +58,18 @@ class Trainer:
         for txt in df.utterance:
             tokens = tokenizer.encode(str(txt), max_length=512,truncation=True)
             token_lens.append(len(tokens))
-        max_len = np.percentile(token_lens,99)
+        max_len = int(np.percentile(token_lens,99))
 
         return df,df_train,df_val,num_labels,max_len,le
 
     def bert_loader(self):
         df,df_train,df_val,num_labels,max_len,le = self.data_loader()
-        trainDataset = BertDataset(df_train,self.config['tokenizer'], max_len)
-        valDataset = BertDataset(df_val, self.config['tokenizer'], max_len)
+        trainDataset = BertDataset(df_train,self.config.MODEL_CONFIG['bert']['tokenizer'], max_len)
+        valDataset = BertDataset(df_val, self.config.MODEL_CONFIG['bert']['tokenizer'], max_len)
 
         trainLoader = DataLoader(
             dataset=trainDataset,
-            batch_size=self.config['train_batch_size'],
+            batch_size=self.config.MODEL_CONFIG['bert']['train_batch_size'],
             shuffle=True,
             num_workers=0,
             pin_memory=True
@@ -74,7 +77,7 @@ class Trainer:
 
         valLoader = DataLoader(
             dataset=valDataset,
-            batch_size=self.config['val_batch_size'],
+            batch_size=self.config.MODEL_CONFIG['bert']['val_batch_size'],
             shuffle=True,
             num_workers=0,
             pin_memory=True
@@ -83,8 +86,8 @@ class Trainer:
         return trainLoader, valLoader, num_labels, le
 
     def bert_trainer(self):
-        epochs = self.config['epochs']
-        device = self.config['device']
+        epochs = self.config.MODEL_CONFIG['bert']['epochs']
+        device = self.config.MODEL_CONFIG['bert']['device']
         
         def validate(model, valLoader):
             model.eval()
@@ -105,9 +108,10 @@ class Trainer:
 
             return print_metrics(val_targets,val_outputs, epoch_loss,'Validation')
         
-        trainLoader, valLoader, num_labels, le = self.bert_loader
-        model = BertModel(num_labels,self.config['model_config']).to(device) 
-        optimizer = torch.optim.AdamW(model.parameters(), lr=self.config['lr'])
+        trainLoader, valLoader, num_labels, le = self.bert_loader()
+        model = BertIntentModel(num_labels,self.config.MODEL_CONFIG['bert']['model_config']).to(device) 
+        # model = BertIntentModel(num_labels,BertConfig()).to(device) 
+        optimizer = torch.optim.AdamW(model.parameters(), lr=self.config.MODEL_CONFIG['bert']['lr'])
         loss_fun = torch.nn.CrossEntropyLoss().to(device)
         prev_loss = float('inf')
         
@@ -119,7 +123,6 @@ class Trainer:
             # training actual and prediction for each epoch for printing metrics
             train_targets = []
             train_outputs = []
-            
             for _, data in enumerate(trainLoader):
                 ids = data['ids'].to(device, dtype=torch.long)
                 mask = data['mask'].to(device, dtype=torch.long)
@@ -153,6 +156,8 @@ class Trainer:
                 prev_loss = val_loss
                 checkpoint = {"state_dict": model.state_dict()}
                 model_saver(checkpoint,filename = self.name)
+
+        return None
 
     
 

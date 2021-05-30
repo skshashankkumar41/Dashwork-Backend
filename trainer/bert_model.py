@@ -1,9 +1,9 @@
 import torch
 from transformers import BertModel, BertPreTrainedModel
 
-class BertModel(BertPreTrainedModel):
+class BertIntentModel(BertPreTrainedModel):
     def __init__(self, num_labels, conf):
-        super(BertModel, self).__init__(conf)
+        super(BertIntentModel, self).__init__(conf)
         self.bert = BertModel.from_pretrained("bert-base-uncased")
         self.drop = torch.nn.Dropout(0.40)
         self.out = torch.nn.Linear(768, num_labels)

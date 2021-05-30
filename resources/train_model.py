@@ -9,6 +9,6 @@ class TrainModel(Resource):
         self.trainer =Trainer(collection,config)
 
     def get(self):
-        self.trainer.data_creator()
+        self.trainer.bert_trainer()
         
         return {'response':'model trained'}
