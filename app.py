@@ -11,6 +11,7 @@ from resources.get_utterances import GetUtterances
 from resources.delete_utterance import DeleteUtterance
 from resources.update_utterance import UpdateUtterance
 from resources.train_model import TrainModel
+from resources.data_upload import DataUpload
 from mongo_connector import db_connector
 
 app = Flask(__name__)
@@ -34,6 +35,7 @@ api.add_resource(GetUtterances, "/get_utterances/" ,resource_class_kwargs={'coll
 api.add_resource(DeleteUtterance, "/delete_utterance/" ,resource_class_kwargs={'collection': intent_collection})
 api.add_resource(UpdateUtterance, "/update_utterance/" ,resource_class_kwargs={'collection': intent_collection})
 api.add_resource(TrainModel, "/train_model/" ,resource_class_kwargs={'collection': intent_collection,'config':config})
+api.add_resource(DataUpload, "/upload_file/" ,resource_class_kwargs={'collection': intent_collection})
 
 
 # @app.route('/')
