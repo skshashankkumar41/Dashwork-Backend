@@ -50,7 +50,6 @@ def print_metrics(true, pred, loss, type):
     return accuracy, loss 
 
 def model_saver(le,max_len,state,filename):
-    print("Storing Model...")
     if not path.isdir(config.MODEL_PATH+'/'+'model_{}'.format(filename)):
         os.mkdir(config.MODEL_PATH+'/'+'model_{}'.format(filename))
     print("Storing Model in {}".format(config.MODEL_PATH+'/'+'model_{}'.format(filename)))

@@ -2,7 +2,6 @@ import torch
 from flask import request
 from flask_restful import Resource
 
-
 class Predict(Resource):
     def __init__(self,collection,model,encoder,tokenizer,max_len,model_name,config):
         self.collection = collection
