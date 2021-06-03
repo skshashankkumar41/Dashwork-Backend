@@ -63,7 +63,9 @@ class Trainer:
         return df,df_train,df_val,num_labels,max_len,le
 
     def bert_loader(self):
+        print("Loading Data for Training...")
         df,df_train,df_val,num_labels,max_len,le = self.data_loader()
+        print("Total Data:",df.shape[0])
         trainDataset = BertDataset(df_train,self.config.MODEL_CONFIG['bert']['tokenizer'], max_len)
         valDataset = BertDataset(df_val, self.config.MODEL_CONFIG['bert']['tokenizer'], max_len)
 
@@ -83,7 +85,7 @@ class Trainer:
             pin_memory=True
         )
 
-        return trainLoader, valLoader, num_labels, le
+        return trainLoader, valLoader, num_labels, le, max_len
 
     def bert_trainer(self):
         epochs = self.config.MODEL_CONFIG['bert']['epochs']
@@ -108,13 +110,13 @@ class Trainer:
 
             return print_metrics(val_targets,val_outputs, epoch_loss,'Validation')
         
-        trainLoader, valLoader, num_labels, le = self.bert_loader()
+        trainLoader, valLoader, num_labels, le, max_len = self.bert_loader()
         model = BertIntentModel(num_labels,self.config.MODEL_CONFIG['bert']['model_config']).to(device) 
         # model = BertIntentModel(num_labels,BertConfig()).to(device) 
         optimizer = torch.optim.AdamW(model.parameters(), lr=self.config.MODEL_CONFIG['bert']['lr'])
         loss_fun = torch.nn.CrossEntropyLoss().to(device)
         prev_loss = float('inf')
-        
+        print("Training Started...")
         for epoch in range(1,epochs+1):
             print(f'Epoch: {epoch}')
             #eval_metrics["epochs"].append(epoch)
@@ -155,7 +157,7 @@ class Trainer:
                 print("Val loss decrease from {} to {}:".format(prev_loss,val_loss))
                 prev_loss = val_loss
                 checkpoint = {"state_dict": model.state_dict()}
-                model_saver(le,checkpoint,filename = self.name)
+                model_saver(le,max_len,checkpoint,filename = self.name)
 
         return None
 

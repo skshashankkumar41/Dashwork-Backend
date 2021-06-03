@@ -1,11 +1,13 @@
 import numpy as np
 import pandas as pd
 import torch
+import glob
 import os
 from os import path
 import config
 import pickle
 from sklearn import metrics
+from trainer.bert_model import BertIntentModel
 import pymongo
 
 def db_connector():
@@ -47,13 +49,48 @@ def print_metrics(true, pred, loss, type):
     # return accuracy,loss
     return accuracy, loss 
 
-def model_saver(le,state,filename):
+def model_saver(le,max_len,state,filename):
+    print("Storing Model...")
     if not path.isdir(config.MODEL_PATH+'/'+'model_{}'.format(filename)):
         os.mkdir(config.MODEL_PATH+'/'+'model_{}'.format(filename))
-    save_path = ''
+    print("Storing Model in {}".format(config.MODEL_PATH+'/'+'model_{}'.format(filename)))
     torch.save(state, config.MODEL_PATH+'/'+'model_{}/model.pth'.format(filename))
     
     with open(config.MODEL_PATH+'/'+'model_{}/encoder.pkl'.format(filename), 'wb') as f:
         pickle.dump(le, f)
+    
+    with open(config.MODEL_PATH+'/'+'model_{}/max_len.pkl'.format(filename), 'wb') as f:
+        pickle.dump({'max_len':max_len}, f)
 
     return None
+
+def model_loader():
+    try:
+        latest_model_path = config.MODEL_PATH+'/model_'+str(max([int(os.path.split(model)[1].split('_')[1]) for model in glob.glob(config.MODEL_PATH+'/*')]))
+        model_name = latest_model_path.split('/')[-1]
+        print("Loading {}...".format(model_name))
+        encoder = '{}/encoder.pkl'.format(latest_model_path)
+        max_len = '{}/max_len.pkl'.format(latest_model_path)
+        model_file = '{}/model.pth'.format(latest_model_path)
+        with open(encoder, 'rb') as file:
+            encoder = pickle.load(file)
+            encoder = encoder.classes_
+
+        with open(max_len, 'rb') as file:
+            max_len = pickle.load(file)
+            max_len = max_len['max_len']
+    
+        device = config.MODEL_CONFIG['bert']['device']
+        tokenizer = config.MODEL_CONFIG['bert']['tokenizer']
+        num_labels = len(encoder)
+        model_config = config.MODEL_CONFIG['bert']['model_config']
+        
+        model = BertIntentModel(num_labels,model_config).to(device) 
+        checkpoint = torch.load(model_file, map_location=device)
+        model.load_state_dict(checkpoint["state_dict"], strict=False)
+        print("Model Loaded...")
+        return model,encoder,tokenizer,max_len,model_name
+    except:
+        return None,None,None,None,None
+    
+    
