@@ -1,7 +1,7 @@
 import torch
 from transformers import BertTokenizer, BertConfig
 
-BASE_PATH = 'G:/AIP/Dashwork-Backend'
+BASE_PATH = ''
 DATA_PATH = BASE_PATH + '/trainer/data'
 MODEL_PATH = BASE_PATH + '/trainer/models'
 

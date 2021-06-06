@@ -117,6 +117,7 @@ class Trainer:
         loss_fun = torch.nn.CrossEntropyLoss().to(device)
         prev_loss = float('inf')
         print("Training Started...")
+        print("Device:",device)
         for epoch in range(1,epochs+1):
             print(f'Epoch: {epoch}')
             #eval_metrics["epochs"].append(epoch)
