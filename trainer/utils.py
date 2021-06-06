@@ -10,12 +10,6 @@ from sklearn import metrics
 from trainer.bert_model import BertIntentModel
 import pymongo
 
-def db_connector():
-    client = pymongo.MongoClient('mongodb://127.0.0.1:27017/')
-    db = client['dashwork']
-    intent_collection = db.intent
-    return intent_collection
-
 def explode(df, lst_cols, fill_value='', preserve_index=False):
     if (lst_cols is not None
         and len(lst_cols) > 0

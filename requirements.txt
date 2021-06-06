@@ -5,7 +5,8 @@ transformers==3.2.0
 Flask_Cors==3.0.8
 Flask_RESTful==0.3.8
 numpy==1.18.3
-scikit_learn==0.24.2
+scikit_learn==0.23.1
 torch==1.7.1
 xlrd==1.2.0
 openpyxl==3.0.0
+pymongo[srv]
