@@ -1,10 +1,13 @@
 import pickle 
+import os
+from os import path
 
 class Vocabulary:
-    def __init__(self, freqThresold):
+    def __init__(self, freqThresold,save_location):
         self.itos = {0: '<PAD>',1: '<UNK>'}
         self.stoi = {'<PAD>': 0,'<UNK>': 1}
-        self.freqThresold = freqThresold
+        self.freqThresold = freqThresold,
+        self.save_location = save_location
 
     def __len__(self):
         return len(self.stoi)
@@ -40,8 +43,10 @@ class Vocabulary:
 
     def storeVocab(self,name):
         print("Saving Vocab Dict...")
-        with open('itos.pkl', 'wb') as f:
+        if not path.isdir('{}'.format(self.save_location)):
+            os.mkdir('{}'.format(self.save_location))
+        with open(self.save_location+'/itos.pkl', 'wb') as f:
             pickle.dump(self.itos, f, pickle.HIGHEST_PROTOCOL)
 
-        with open('stoi.pkl', 'wb') as f:
+        with open(self.save_location+'/stoi.pkl', 'wb') as f:
             pickle.dump(self.stoi, f, pickle.HIGHEST_PROTOCOL)

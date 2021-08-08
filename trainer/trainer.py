@@ -162,13 +162,13 @@ class Trainer:
                 print("Val loss decrease from {} to {}:".format(prev_loss,val_loss))
                 prev_loss = val_loss
                 checkpoint = {"state_dict": model.state_dict()}
-                model_saver(le,max_len,checkpoint,filename = self.name)
+                model_saver(le,checkpoint,filename = self.name,max_len=max_len)
 
         return None
 
     def lstm_loader(self):
         def build_vocab_and_embedding_fasttext(df):
-            vocab = Vocabulary(1)
+            vocab = Vocabulary(1, self.config.MODEL_CONFIG['lstm']['model_path']+'/model_${self.name}')
             vocab.build_vocabulary(df['utterance'].tolist())
 
             matrix_len = len(vocab.itos)
@@ -242,7 +242,7 @@ class Trainer:
 
         trainLoader, valLoader, num_labels, le, weights_matrix, vocab = self.lstm_loader()
         model = LSTMIntentModel(vocab,weights_matrix,len(le.classes_)).to(device)
-        optimizer = torch.optim.Adam(model.parameters(), lr=0.001, betas=(0.9, 0.999), eps=1e-08, weight_decay=0, amsgrad=False)
+        optimizer = torch.optim.Adam(model.parameters(), lr=self.config.MODEL_CONFIG['lstm']['lr'], betas=(0.9, 0.999), eps=1e-08, weight_decay=0, amsgrad=False)
         criterion = nn.CrossEntropyLoss()
         prev_loss = float('inf')
         for epoch in range(1,epochs+1):
@@ -279,6 +279,6 @@ class Trainer:
                 print("Val loss decrease from {} to {}:".format(prev_loss,val_loss))
                 prev_loss = val_loss
                 checkpoint = {"state_dict": model.state_dict()}
-                model_saver(le,32,checkpoint,filename = self.name)
+                model_saver(le,checkpoint,filename = self.config.MODEL_CONFIG['lstm']['model_path']+'/model_${self.name}')
 
         return None

@@ -43,16 +43,16 @@ def print_metrics(true, pred, loss, type):
     # return accuracy,loss
     return accuracy, loss 
 
-def model_saver(le,max_len,state,filename):
-    if not path.isdir(config.MODEL_PATH+'/'+'model_{}'.format(filename)):
-        os.mkdir(config.MODEL_PATH+'/'+'model_{}'.format(filename))
-    print("Storing Model in {}".format(config.MODEL_PATH+'/'+'model_{}'.format(filename)))
-    torch.save(state, config.MODEL_PATH+'/'+'model_{}/model.pth'.format(filename))
+def model_saver(le,state,filename,max_len=None,vocab_data=None):
+    if not path.isdir('{}'.format(filename)):
+        os.mkdir('{}'.format(filename))
+    print("Storing Model in {}".format('{}'.format(filename)))
+    torch.save(state, '{}/model.pth'.format(filename))
     
-    with open(config.MODEL_PATH+'/'+'model_{}/encoder.pkl'.format(filename), 'wb') as f:
+    with open('{}/encoder.pkl'.format(filename), 'wb') as f:
         pickle.dump(le, f)
-    
-    with open(config.MODEL_PATH+'/'+'model_{}/max_len.pkl'.format(filename), 'wb') as f:
+
+    with open('{}/max_len.pkl'.format(filename), 'wb') as f:
         pickle.dump({'max_len':max_len}, f)
 
     return None
