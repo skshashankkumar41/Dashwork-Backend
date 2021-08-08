@@ -19,6 +19,7 @@ MODEL_CONFIG = {
     },
     'lstm':{
         'model_path':BASE_PATH+'trainer/models/lstm',
+        'embedding_path':'G:/AIP/cc.en.100.bin',
         'device':torch.device("cuda" if torch.cuda.is_available() else "cpu"),
         'lr':0.001,
         'epochs':15,

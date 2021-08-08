@@ -6,7 +6,7 @@ class Vocabulary:
     def __init__(self, freqThresold,save_location):
         self.itos = {0: '<PAD>',1: '<UNK>'}
         self.stoi = {'<PAD>': 0,'<UNK>': 1}
-        self.freqThresold = freqThresold,
+        self.freqThresold = freqThresold
         self.save_location = save_location
 
     def __len__(self):
@@ -41,7 +41,7 @@ class Vocabulary:
             self.stoi[token] if token in self.stoi else self.stoi['<UNK>'] for token in tokenizedText
         ]
 
-    def storeVocab(self,name):
+    def storeVocab(self):
         print("Saving Vocab Dict...")
         if not path.isdir('{}'.format(self.save_location)):
             os.mkdir('{}'.format(self.save_location))

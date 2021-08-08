@@ -54,7 +54,7 @@ class Trainer:
         df['intent'] = le.fit_transform(df['intent'])
         num_labels = len(le.classes_)
 
-        df_train, df_val = train_test_split(df, test_size=.10,stratify = df.intent)
+        df_train, df_val = train_test_split(df, test_size=.10,stratify = df[['intent']])
         df_train.reset_index(drop=True, inplace=True)
         df_val.reset_index(drop=True, inplace=True)
 
@@ -168,15 +168,15 @@ class Trainer:
 
     def lstm_loader(self):
         def build_vocab_and_embedding_fasttext(df):
-            vocab = Vocabulary(1, self.config.MODEL_CONFIG['lstm']['model_path']+'/model_${self.name}')
+            vocab = Vocabulary(1, self.config.MODEL_CONFIG['lstm']['model_path']+f'/model_{self.name}')
             vocab.build_vocabulary(df['utterance'].tolist())
-
+            vocab.storeVocab()
             matrix_len = len(vocab.itos)
             weights_matrix = np.zeros((matrix_len, 100))
             words_found = 0
             emb_dim = 100
 
-            model = fasttext.load_model("cc.en.100.bin")
+            model = fasttext.load_model(self.config.MODEL_CONFIG['lstm']["embedding_path"])
             
             for ind,(i, word) in enumerate(vocab.itos.items()):
                 if ind > 1:
@@ -279,6 +279,6 @@ class Trainer:
                 print("Val loss decrease from {} to {}:".format(prev_loss,val_loss))
                 prev_loss = val_loss
                 checkpoint = {"state_dict": model.state_dict()}
-                model_saver(le,checkpoint,filename = self.config.MODEL_CONFIG['lstm']['model_path']+'/model_${self.name}')
+                model_saver(le,checkpoint,filename = self.config.MODEL_CONFIG['lstm']['model_path']+f'/model_{self.name}')
 
         return None
