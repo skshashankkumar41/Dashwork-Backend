@@ -53,18 +53,17 @@ class Trainer:
         df_train.reset_index(drop=True, inplace=True)
         df_val.reset_index(drop=True, inplace=True)
 
+        return df,df_train,df_val,num_labels,le
+
+    def bert_loader(self):
+        print("Loading Data for Training...")
+        df,df_train,df_val,num_labels,le = self.data_loader()
         tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
         token_lens = []
         for txt in df.utterance:
             tokens = tokenizer.encode(str(txt), max_length=512,truncation=True)
             token_lens.append(len(tokens))
         max_len = int(np.percentile(token_lens,99))
-
-        return df,df_train,df_val,num_labels,max_len,le
-
-    def bert_loader(self):
-        print("Loading Data for Training...")
-        df,df_train,df_val,num_labels,max_len,le = self.data_loader()
         print("Total Data:",df.shape[0])
         trainDataset = BertDataset(df_train,self.config.MODEL_CONFIG['bert']['tokenizer'], max_len)
         valDataset = BertDataset(df_val, self.config.MODEL_CONFIG['bert']['tokenizer'], max_len)
@@ -161,6 +160,9 @@ class Trainer:
                 model_saver(le,max_len,checkpoint,filename = self.name)
 
         return None
+
+    def lstm_loader(self):
+        
 
     
 
