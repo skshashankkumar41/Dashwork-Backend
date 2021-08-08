@@ -1,16 +1,21 @@
 import os
 import torch
 import pandas as pd
+import fasttext
 import numpy as np
+import torch.nn as nn
 from .utils import explode,print_metrics,model_saver
 from .bert_dataset import BertDataset
 from .bert_model import BertIntentModel
+from .lstm_dataset import LSTMDataset,MyCollate
+from .lstm_model import LSTMIntentModel
 from torch.utils.data import DataLoader
 from datetime import datetime
 from transformers import BertTokenizer
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 from transformers import BertTokenizer, BertConfig
+from .custom_tokenizer import Vocabulary
 
 class Trainer:
     def __init__(self,intent_collection,config):
@@ -162,9 +167,118 @@ class Trainer:
         return None
 
     def lstm_loader(self):
-        
+        def build_vocab_and_embedding_fasttext(df):
+            vocab = Vocabulary(1)
+            vocab.build_vocabulary(df['utterance'].tolist())
 
+            matrix_len = len(vocab.itos)
+            weights_matrix = np.zeros((matrix_len, 100))
+            words_found = 0
+            emb_dim = 100
+
+            model = fasttext.load_model("cc.en.100.bin")
+            
+            for ind,(i, word) in enumerate(vocab.itos.items()):
+                if ind > 1:
+                    try: 
+                        weights_matrix[i] = model[word]
+                        words_found += 1
+                    except KeyError:
+                        weights_matrix[i] = np.random.normal(scale=0.6, size=(emb_dim, ))
+
+            return vocab,weights_matrix
+        
+        df,df_train,df_val,num_labels,le = self.data_loader()
+        vocab,weights_matrix = build_vocab_and_embedding_fasttext(df_train)
+
+        trainDataset = LSTMDataset(df_train, vocab)
+        valDataset = LSTMDataset(df_val, vocab)
+
+        padIdx = trainDataset.vocab.stoi['<PAD>']
     
+        trainLoader = DataLoader(
+            dataset =trainDataset,
+            batch_size= self.config.MODEL_CONFIG['lstm']['train_batch_size'],
+            shuffle = True, 
+            drop_last=True,
+            collate_fn = MyCollate(padIdx = padIdx ),
+            
+        )
 
+        valLoader = DataLoader(
+            dataset = valDataset,
+            batch_size= self.config.MODEL_CONFIG['lstm']['val_batch_size'],
+            shuffle = True, 
+            drop_last=True,
+            collate_fn = MyCollate(padIdx = padIdx )
+        )
 
+        return trainLoader, valLoader, num_labels, le, weights_matrix, vocab
         
+    def lstm_trainer(self):
+        epochs = self.config.MODEL_CONFIG['lstm']['epochs']
+        device = self.config.MODEL_CONFIG['lstm']['device']
+
+        def validate(model,valLoader):
+            eval_acc = 0
+            batch_loader = valLoader 
+            model.eval()
+            with torch.no_grad():
+                val_targets = []
+                val_outputs = []
+                val_losses = []
+                for iters, (sent1,sent1_len, label) in enumerate(batch_loader):
+                    sent1 = sent1.to(device, dtype=torch.long)
+                    sent1_len = sent1_len.to(device, dtype=torch.long)
+                    label = label.to(device, dtype=torch.long)
+                    out = model(sent1,sent1_len)
+                    loss = criterion(out, label)
+                    preds = torch.argmax(out, dim=1)
+                    val_targets.extend(label.cpu().detach().numpy().tolist())
+                    val_outputs.extend(preds.cpu().detach().numpy().tolist())
+                    val_losses.append(loss.item())
+                eval_loss = sum(val_losses)/len(val_losses)
+            return print_metrics(val_targets,val_outputs, eval_loss,'Validation')
+
+        trainLoader, valLoader, num_labels, le, weights_matrix, vocab = self.lstm_loader()
+        model = LSTMIntentModel(vocab,weights_matrix,len(le.classes_)).to(device)
+        optimizer = torch.optim.Adam(model.parameters(), lr=0.001, betas=(0.9, 0.999), eps=1e-08, weight_decay=0, amsgrad=False)
+        criterion = nn.CrossEntropyLoss()
+        prev_loss = float('inf')
+        for epoch in range(1,epochs+1):
+            print(f'Epoch: {epoch}')
+
+            # training actual and prediction for each epoch for printing metrics
+            train_targets = []
+            train_outputs = []
+            losses = []
+            model.train()
+            for iters, (sent1,sent1_len, label) in enumerate(trainLoader):
+                sent1 = sent1.to(device, dtype=torch.long)
+                sent1_len = sent1_len.to(device, dtype=torch.long)
+                label = label.to(device, dtype=torch.long)
+                out = model(sent1,sent1_len)
+                
+                loss = criterion(out, label)
+
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+
+                preds = torch.argmax(out, dim=1)
+                losses.append(loss.item())
+                train_targets.extend(label.cpu().detach().numpy().tolist())
+                train_outputs.extend(preds.cpu().detach().numpy().tolist())
+
+
+                
+            train_loss = sum(losses)/len(losses)
+            train_accuracy,train_loss = print_metrics(train_targets,train_outputs,train_loss, 'Training')
+            val_acc,val_loss = validate(model, valLoader)
+            if val_loss < prev_loss:
+                print("Val loss decrease from {} to {}:".format(prev_loss,val_loss))
+                prev_loss = val_loss
+                checkpoint = {"state_dict": model.state_dict()}
+                model_saver(le,32,checkpoint,filename = self.name)
+
+        return None
