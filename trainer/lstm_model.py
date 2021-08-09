@@ -3,13 +3,14 @@ import torch.nn as nn
 from torch.nn.utils.rnn import pad_packed_sequence, pack_padded_sequence
 
 class LSTMIntentModel(nn.Module):
-    def __init__(self,vocab,weights_matrix,num_classes):
+    def __init__(self,vocab,num_classes,weights_matrix=None,infer=False):
         super(LSTMIntentModel, self).__init__()
         self.vocab_size = len(vocab)
         self.embed_dim = 100
         self.embedding = nn.Embedding(self.vocab_size, self.embed_dim)
-        self.embedding.weight.data.copy_(torch.tensor(weights_matrix))
-        self.embedding.weight.requires_grad = True
+        if not infer:
+            self.embedding.weight.data.copy_(torch.tensor(weights_matrix))
+            self.embedding.weight.requires_grad = True
         self.fc_dim = 64
         self.num_classes = num_classes
         self.final_dim = 100

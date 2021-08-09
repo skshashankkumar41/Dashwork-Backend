@@ -14,7 +14,7 @@ from resources.train_model import TrainModel
 from resources.data_upload import DataUpload
 from resources.predict import Predict
 from mongo_connector import db_connector
-from trainer.utils import model_loader
+from trainer.utils import model_loader,lstm_model_loader
 
 app = Flask(__name__)
 api = Api(app)
@@ -26,7 +26,7 @@ cors = CORS(app, resources={
 })
 
 intent_collection = db_connector()
-model,encoder,tokenizer,max_len,model_name = model_loader()
+model,encoder,tokenizer,max_len,model_name = lstm_model_loader()
 # trainer = Trainer(intent_collection,config.DATA_PATH)
 # resp = trainer.data_creator()
 

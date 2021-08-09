@@ -22,7 +22,7 @@ MODEL_CONFIG = {
         'embedding_path':'G:/AIP/cc.en.100.bin',
         'device':torch.device("cuda" if torch.cuda.is_available() else "cpu"),
         'lr':0.001,
-        'epochs':15,
+        'epochs':20,
         'train_batch_size':6,
         'val_batch_size':3,
 

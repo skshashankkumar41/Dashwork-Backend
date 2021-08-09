@@ -1,10 +1,11 @@
 import os
+import time
 import torch
 import pandas as pd
 import fasttext
 import numpy as np
 import torch.nn as nn
-from .utils import explode,print_metrics,model_saver
+from .utils import explode,print_metrics,model_saver,evaluater
 from .bert_dataset import BertDataset
 from .bert_model import BertIntentModel
 from .lstm_dataset import LSTMDataset,MyCollate
@@ -123,7 +124,8 @@ class Trainer:
         print("Training Started...")
         print("Device:",device)
         for epoch in range(1,epochs+1):
-            print(f'Epoch: {epoch}')
+            start_time = time.time()
+            # print(f'Epoch: {epoch}')
             #eval_metrics["epochs"].append(epoch)
             model.train()
             epoch_loss = 0
@@ -155,9 +157,9 @@ class Trainer:
                 optimizer.zero_grad()
 
             # calculating the evaluation scores for both training and validation data
-            train_accuracy,train_loss = print_metrics(train_targets,train_outputs,epoch_loss, 'Training')
-            val_accuracy, val_loss = validate(model, valLoader)
-
+            train_acc,train_f1_score,train_loss = evaluater(train_targets,train_outputs,epoch_loss)
+            val_acc,val_f1_score,val_loss = validate(model, valLoader)
+            print_metrics(epoch,train_acc,train_f1_score,train_loss,val_acc,val_f1_score,val_loss,epochs,time.time() - start_time)
             if val_loss < prev_loss:
                 print("Val loss decrease from {} to {}:".format(prev_loss,val_loss))
                 prev_loss = val_loss
@@ -238,17 +240,17 @@ class Trainer:
                     val_outputs.extend(preds.cpu().detach().numpy().tolist())
                     val_losses.append(loss.item())
                 eval_loss = sum(val_losses)/len(val_losses)
-            return print_metrics(val_targets,val_outputs, eval_loss,'Validation')
+            return evaluater(val_targets,val_outputs, eval_loss)
 
         trainLoader, valLoader, num_labels, le, weights_matrix, vocab = self.lstm_loader()
-        model = LSTMIntentModel(vocab,weights_matrix,len(le.classes_)).to(device)
+        model = LSTMIntentModel(vocab,len(le.classes_),weights_matrix).to(device)
         optimizer = torch.optim.Adam(model.parameters(), lr=self.config.MODEL_CONFIG['lstm']['lr'], betas=(0.9, 0.999), eps=1e-08, weight_decay=0, amsgrad=False)
         criterion = nn.CrossEntropyLoss()
         prev_loss = float('inf')
         for epoch in range(1,epochs+1):
-            print(f'Epoch: {epoch}')
-
+            # print(f'Epoch: {epoch}')
             # training actual and prediction for each epoch for printing metrics
+            start_time = time.time()
             train_targets = []
             train_outputs = []
             losses = []
@@ -273,12 +275,13 @@ class Trainer:
 
                 
             train_loss = sum(losses)/len(losses)
-            train_accuracy,train_loss = print_metrics(train_targets,train_outputs,train_loss, 'Training')
-            val_acc,val_loss = validate(model, valLoader)
+            train_acc,train_f1_score,train_loss = evaluater(train_targets,train_outputs,train_loss)
+            val_acc,val_f1_score,val_loss = validate(model, valLoader)
+            print_metrics(epoch,train_acc,train_f1_score,train_loss,val_acc,val_f1_score,val_loss,epochs,time.time() - start_time)
             if val_loss < prev_loss:
                 print("Val loss decrease from {} to {}:".format(prev_loss,val_loss))
                 prev_loss = val_loss
                 checkpoint = {"state_dict": model.state_dict()}
-                model_saver(le,checkpoint,filename = self.config.MODEL_CONFIG['lstm']['model_path']+f'/model_{self.name}')
+                model_saver(le,checkpoint,vocab=vocab,filename = self.config.MODEL_CONFIG['lstm']['model_path']+f'/model_{self.name}')
 
         return None
