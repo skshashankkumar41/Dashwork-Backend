@@ -3,7 +3,7 @@ from transformers import BertTokenizer, BertConfig
 
 BASE_PATH = ''
 DATA_PATH = BASE_PATH + 'trainer/data'
-MODEL_PATH = BASE_PATH + 'trainer/models/lstm'
+# MODEL_PATH = BASE_PATH + 'trainer/models/lstm'
 
 MODEL_CONFIG = {
     'bert':{

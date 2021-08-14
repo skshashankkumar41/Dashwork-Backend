@@ -64,7 +64,7 @@ class TransformerModel(nn.Module):
         return output
 
 class TransformerIntentModel(nn.Module):
-    def __init__(self,vocab,max_len,num_classes,weights_matrix=None,inference=False):
+    def __init__(self,vocab,max_len,num_classes,weights_matrix=None,infer=False):
         super(TransformerIntentModel, self).__init__()
         self.vocab_size = len(vocab)
         self.num_classes = num_classes
@@ -75,7 +75,8 @@ class TransformerIntentModel(nn.Module):
         self.fc_dim = 64
         self.num_layers = 2
         self.dropout = 0.2
-        self.transformer = TransformerModel(self.vocab_size,self.embed_dim,self.num_head,self.ff_dim,self.num_layers,self.max_len,weights_matrix,self.dropout,inference)
+
+        self.transformer = TransformerModel(self.vocab_size,self.embed_dim,self.num_head,self.ff_dim,self.num_layers,self.max_len,weights_matrix,infer,self.dropout)
         self.net = nn.Sequential(nn.Linear(self.embed_dim, self.fc_dim),
                                  nn.ReLU(),
                                  nn.Dropout(p=0.20),

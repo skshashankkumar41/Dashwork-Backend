@@ -21,7 +21,7 @@ class TransformerDataset(Dataset):
 
         return torch.tensor(encoded_utter), torch.tensor(intent)
 
-class MyCollate:
+class TransformerCollate:
     def __init__(self,padIdx):
         self.padIdx = padIdx
 

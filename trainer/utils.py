@@ -94,7 +94,7 @@ def model_loader():
 
 def lstm_model_loader():
     try:
-        latest_model_path = config.MODEL_CONFIG['lstm']+'/model_'+str(max([int(os.path.split(model)[1].split('_')[1]) for model in glob.glob(config.MODEL_PATH+'/*')]))
+        latest_model_path = config.MODEL_CONFIG['lstm']['model_path']+'/model_'+str(max([int(os.path.split(model)[1].split('_')[1]) for model in glob.glob(config.MODEL_CONFIG['transformer']['model_path']+'/*')]))
         model_name = latest_model_path.split('/')[-1]
         print("Loading {}...".format(model_name))
         encoder = '{}/encoder.pkl'.format(latest_model_path)
@@ -127,7 +127,7 @@ def lstm_model_loader():
 
 def transformer_model_loader():
     try:
-        latest_model_path = config.MODEL_CONFIG['transformer']+'/model_'+str(max([int(os.path.split(model)[1].split('_')[1]) for model in glob.glob(config.MODEL_PATH+'/*')]))
+        latest_model_path = config.MODEL_CONFIG['transformer']['model_path']+'/model_'+str(max([int(os.path.split(model)[1].split('_')[1]) for model in glob.glob(config.MODEL_CONFIG['transformer']['model_path']+'/*')]))
         model_name = latest_model_path.split('/')[-1]
         print("Loading {}...".format(model_name))
         encoder = '{}/encoder.pkl'.format(latest_model_path)
@@ -149,7 +149,7 @@ def transformer_model_loader():
         device = config.MODEL_CONFIG['transformer']['device']
         num_labels = len(encoder)
 
-        model = TransformerIntentModel(vocab,num_labels,infer=True).to(device)
+        model = TransformerIntentModel(vocab,max_len,num_labels,weights_matrix=None,infer=True).to(device)
         checkpoint = torch.load(model_file, map_location=device)
         model.load_state_dict(checkpoint["state_dict"], strict=False)
         print("Model Loaded...")

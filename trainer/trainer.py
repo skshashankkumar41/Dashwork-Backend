@@ -10,7 +10,7 @@ from .bert_dataset import BertDataset
 from .bert_model import BertIntentModel
 from .lstm_dataset import LSTMDataset,MyCollate
 from .lstm_model import LSTMIntentModel
-from .transformer_dataset import TransformerDataset
+from .transformer_dataset import TransformerDataset,TransformerCollate
 from .transformer_model import TransformerIntentModel
 from torch.utils.data import DataLoader
 from datetime import datetime
@@ -317,7 +317,7 @@ class Trainer:
         for txt in df.utterance:
             tokens = vocab.encode(str(txt))
             token_lens.append(len(tokens))
-        max_len = int(np.percentile(token_lens,99.5))
+        max_len = int(np.percentile(token_lens,100))
 
         trainDataset = TransformerDataset(df_train, vocab)
         valDataset = TransformerDataset(df_val, vocab)
@@ -329,7 +329,7 @@ class Trainer:
             batch_size= self.config.MODEL_CONFIG['transformer']['train_batch_size'],
             shuffle = True, 
             drop_last=True,
-            collate_fn = MyCollate(padIdx = padIdx ),
+            collate_fn = TransformerCollate(padIdx = padIdx ),
             
         )
 
@@ -338,7 +338,7 @@ class Trainer:
             batch_size= self.config.MODEL_CONFIG['transformer']['val_batch_size'],
             shuffle = True, 
             drop_last=True,
-            collate_fn = MyCollate(padIdx = padIdx )
+            collate_fn = TransformerCollate(padIdx = padIdx )
         )
 
         return trainLoader, valLoader, num_labels, le, weights_matrix, vocab, max_len
@@ -407,6 +407,6 @@ class Trainer:
                 print("Val loss decrease from {} to {}:".format(prev_loss,val_loss))
                 prev_loss = val_loss
                 checkpoint = {"state_dict": model.state_dict()}
-                model_saver(le,checkpoint,vocab=vocab,filename = self.config.MODEL_CONFIG['transformer']['model_path']+f'/model_{self.name}')
+                model_saver(le,checkpoint,vocab=vocab,filename = self.config.MODEL_CONFIG['transformer']['model_path']+f'/model_{self.name}',max_len=max_len)
 
         return None
