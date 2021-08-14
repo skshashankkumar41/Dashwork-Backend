@@ -30,11 +30,11 @@ class PositionalEncoding(nn.Module):
 class TransformerModel(nn.Module):
 
     def __init__(self, vocab_size, embed_dim, nhead, d_hid,
-                 nlayers, weights_matrix=None, dropout=0.5,infer=False):
+                 nlayers, max_len,weights_matrix, infer, dropout=0.5):
         super().__init__()
         self.model_type = 'Transformer'
         self.embed_dim = embed_dim
-        self.pos_encoder = PositionalEncoding(embed_dim, dropout)
+        self.pos_encoder = PositionalEncoding(embed_dim, dropout, max_len)
         encoder_layers = TransformerEncoderLayer(d_model=embed_dim, nhead=nhead, dim_feedforward=d_hid, dropout=dropout)
         self.transformer_encoder = TransformerEncoder(encoder_layers, nlayers)
         self.encoder = nn.Embedding(vocab_size, embed_dim)
@@ -63,9 +63,9 @@ class TransformerModel(nn.Module):
         output = torch.mean(output,dim=0)
         return output
 
-class Transformer_Model(nn.Module):
-    def __init__(self,vocab,max_len,num_classes):
-        super(Transformer_Model, self).__init__()
+class TransformerIntentModel(nn.Module):
+    def __init__(self,vocab,max_len,num_classes,weights_matrix=None,inference=False):
+        super(TransformerIntentModel, self).__init__()
         self.vocab_size = len(vocab)
         self.num_classes = num_classes
         self.max_len = max_len
@@ -75,7 +75,7 @@ class Transformer_Model(nn.Module):
         self.fc_dim = 64
         self.num_layers = 2
         self.dropout = 0.2
-        self.transformer = TransformerModel(self.vocab_size,self.embed_dim,self.num_head,self.ff_dim,self.num_layers,self.dropout)
+        self.transformer = TransformerModel(self.vocab_size,self.embed_dim,self.num_head,self.ff_dim,self.num_layers,self.max_len,weights_matrix,self.dropout,inference)
         self.net = nn.Sequential(nn.Linear(self.embed_dim, self.fc_dim),
                                  nn.ReLU(),
                                  nn.Dropout(p=0.20),

@@ -26,5 +26,14 @@ MODEL_CONFIG = {
         'train_batch_size':6,
         'val_batch_size':3,
 
+    },
+    'transformer':{
+        'model_path':BASE_PATH+'trainer/models/transformer',
+        'embedding_path':'G:/AIP/cc.en.100.bin',
+        'device':torch.device("cuda" if torch.cuda.is_available() else "cpu"),
+        'lr':0.0004,
+        'epochs':20,
+        'train_batch_size':6,
+        'val_batch_size':3,
     }
 }

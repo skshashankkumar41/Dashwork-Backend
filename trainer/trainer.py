@@ -10,6 +10,8 @@ from .bert_dataset import BertDataset
 from .bert_model import BertIntentModel
 from .lstm_dataset import LSTMDataset,MyCollate
 from .lstm_model import LSTMIntentModel
+from .transformer_dataset import TransformerDataset
+from .transformer_model import TransformerIntentModel
 from torch.utils.data import DataLoader
 from datetime import datetime
 from transformers import BertTokenizer
@@ -283,5 +285,128 @@ class Trainer:
                 prev_loss = val_loss
                 checkpoint = {"state_dict": model.state_dict()}
                 model_saver(le,checkpoint,vocab=vocab,filename = self.config.MODEL_CONFIG['lstm']['model_path']+f'/model_{self.name}')
+
+        return None
+
+    def transformer_loader(self):
+        def build_vocab_and_embedding_fasttext(df):
+            vocab = Vocabulary(1, self.config.MODEL_CONFIG['transformer']['model_path']+f'/model_{self.name}')
+            vocab.build_vocabulary(df['utterance'].tolist())
+            vocab.storeVocab()
+            matrix_len = len(vocab.itos)
+            weights_matrix = np.zeros((matrix_len, 100))
+            words_found = 0
+            emb_dim = 100
+
+            model = fasttext.load_model(self.config.MODEL_CONFIG['transformer']["embedding_path"])
+            
+            for ind,(i, word) in enumerate(vocab.itos.items()):
+                if ind > 1:
+                    try: 
+                        weights_matrix[i] = model[word]
+                        words_found += 1
+                    except KeyError:
+                        weights_matrix[i] = np.random.normal(scale=0.6, size=(emb_dim, ))
+
+            return vocab,weights_matrix
+        
+        df,df_train,df_val,num_labels,le = self.data_loader()
+        vocab,weights_matrix = build_vocab_and_embedding_fasttext(df_train)
+
+        token_lens = []
+        for txt in df.utterance:
+            tokens = vocab.encode(str(txt))
+            token_lens.append(len(tokens))
+        max_len = int(np.percentile(token_lens,99.5))
+
+        trainDataset = TransformerDataset(df_train, vocab)
+        valDataset = TransformerDataset(df_val, vocab)
+
+        padIdx = trainDataset.vocab.stoi['<PAD>']
+    
+        trainLoader = DataLoader(
+            dataset =trainDataset,
+            batch_size= self.config.MODEL_CONFIG['transformer']['train_batch_size'],
+            shuffle = True, 
+            drop_last=True,
+            collate_fn = MyCollate(padIdx = padIdx ),
+            
+        )
+
+        valLoader = DataLoader(
+            dataset = valDataset,
+            batch_size= self.config.MODEL_CONFIG['transformer']['val_batch_size'],
+            shuffle = True, 
+            drop_last=True,
+            collate_fn = MyCollate(padIdx = padIdx )
+        )
+
+        return trainLoader, valLoader, num_labels, le, weights_matrix, vocab, max_len
+
+
+    def transformer_trainer(self):
+        epochs = self.config.MODEL_CONFIG['transformer']['epochs']
+        device = self.config.MODEL_CONFIG['transformer']['device']
+
+        def validate(model,valLoader):
+            eval_acc = 0
+            batch_loader = valLoader 
+            model.eval()
+            with torch.no_grad():
+                val_targets = []
+                val_outputs = []
+                val_losses = []
+                for iters, (sent1, label) in enumerate(batch_loader):
+                    sent1 = sent1.to(device, dtype=torch.long)
+                    label = label.to(device, dtype=torch.long)
+                    out = model(sent1)
+                    loss = criterion(out, label)
+                    preds = torch.argmax(out, dim=1)
+                    val_targets.extend(label.cpu().detach().numpy().tolist())
+                    val_outputs.extend(preds.cpu().detach().numpy().tolist())
+                    val_losses.append(loss.item())
+                eval_loss = sum(val_losses)/len(val_losses)
+            return evaluater(val_targets,val_outputs, eval_loss)
+
+        trainLoader, valLoader, num_labels, le, weights_matrix, vocab,max_len = self.transformer_loader()
+        model = TransformerIntentModel(vocab,max_len,len(le.classes_),weights_matrix).to(device)
+        optimizer = torch.optim.Adam(params=model.parameters(), lr=self.config.MODEL_CONFIG['transformer']['lr'])
+        criterion = nn.CrossEntropyLoss()
+        prev_loss = float('inf')
+        for epoch in range(1,epochs+1):
+            # print(f'Epoch: {epoch}')
+            # training actual and prediction for each epoch for printing metrics
+            start_time = time.time()
+            train_targets = []
+            train_outputs = []
+            losses = []
+            model.train()
+            for iters, (sent1, label) in enumerate(trainLoader):
+                sent1 = sent1.to(device, dtype=torch.long)
+                label = label.to(device, dtype=torch.long)
+                out = model(sent1)
+                
+                loss = criterion(out, label)
+
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+
+                preds = torch.argmax(out, dim=1)
+                losses.append(loss.item())
+                train_targets.extend(label.cpu().detach().numpy().tolist())
+                train_outputs.extend(preds.cpu().detach().numpy().tolist())
+
+
+                
+            train_loss = sum(losses)/len(losses)
+            train_acc,train_f1_score,train_loss = evaluater(train_targets,train_outputs,train_loss)
+            val_acc,val_f1_score,val_loss = validate(model, valLoader)
+            print_metrics(epoch,train_acc,train_f1_score,train_loss,val_acc,val_f1_score,val_loss,epochs,time.time() - start_time)
+            if val_loss < prev_loss:
+                print("Val loss decrease from {} to {}:".format(prev_loss,val_loss))
+                prev_loss = val_loss
+                checkpoint = {"state_dict": model.state_dict()}
+                model_saver(le,checkpoint,vocab=vocab,filename = self.config.MODEL_CONFIG['transformer']['model_path']+f'/model_{self.name}')
 
         return None

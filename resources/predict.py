@@ -74,9 +74,35 @@ class Predict(Resource):
             }
         }
 
+    def predict_transformer(self,utterance,model,encoder,tokenizer,max_len,model_name,config):
+        model.eval()
+        device = config.MODEL_CONFIG['transformer']['device']
+        encoded_utter = [] 
+        encoded_utter += tokenizer.encode(utterance)
+        encoded_utter = torch.tensor([encoded_utter])
+        encoded_utter = encoded_utter.permute(1,0)
+        encoded_utter = encoded_utter.to(device, dtype=torch.long)
+        out = model(encoded_utter)
+        m = nn.Softmax(dim=1)
+        out = m(out)
+        probs = [round(i,4) for i in out.tolist()[0]]
+        preds = torch.argmax(out)
+        # label = encoder.inverse_transform([preds.item()])[0]
+        label =  encoder[preds.item()]
+        prob = probs[preds.item()]
+        
+        return {
+            'intent':{
+                'utterance':utterance,
+                'name':label,
+                'confidence':prob,
+                'model_name':model_name,
+            }
+        }
+
     def post(self):
         utterance = request.json['utterance']
         if self.model is None:
             return {'message':"Please Train Model First"}
         else:
-            return self.predict_lstm(utterance,self.model,self.encoder,self.tokenizer,self.max_len,self.model_name,self.config)
+            return self.predict_transformer(utterance,self.model,self.encoder,self.tokenizer,self.max_len,self.model_name,self.config)
